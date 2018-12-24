@@ -5,22 +5,27 @@ socket.on('connect', function() {
 });
 
 socket.on('newMessage', function(message) {
-  console.log('NewMessage: ', message);
-  const li = jQuery('<li></li>');
-  li.text(`${message.from}: ${message.text}`);
+  const formatedTime = moment(message.createdAtt).format('LT');
+  const template = jQuery('#message-template').html();
+  const html = Mustache.render(template, {
+    text: message.text,
+    from: message.from,
+    createdAt: formatedTime
+  });
 
-  jQuery('#messages').append(li);
+  jQuery('#messages').append(html);
 });
 
 // display geolocation as a link
 socket.on('newLocationMessage', function(message) {
-  const li = jQuery('<li></li>');
-  const a = jQuery('<a target="_blank">My current location</a>');
-
-  li.text(`${message.from}: `);
-  a.attr('href', message.url);
-  li.append(a);
-  jQuery('#messages').append(li);
+  const formatedTime = moment(message.createdAtt).format('LT');
+  const template = jQuery('#location-message-template').html();
+  const html = Mustache.render(template, {
+    from: message.from,
+    createdAt: formatedTime,
+    url: message.url
+  });
+  jQuery('#messages').append(html);
 });
 
 socket.on('disconnect', function() {
