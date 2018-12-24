@@ -50,18 +50,27 @@ io.on('connection', socket => {
     callback();
   });
 
-  // sends message to everybody
+  // sends message to everybody in the room
   socket.on('createMessage', (message, callback) => {
-    io.emit('newMessage', generateMessage(message.from, message.text));
+    const user = users.getUser(socket.id);
+    if (user && isRealString(message.text)) {
+      io.to(user.room).emit(
+        'newMessage',
+        generateMessage(user.name, message.text)
+      );
+    }
     callback();
   });
 
-  // sends your geolocation to everybody
+  // sends your geolocation to everybody in the room
   socket.on('createLocationMessage', coords => {
-    io.emit(
-      'newLocationMessage',
-      generateLocationMessage('Admin', coords.latitude, coords.longitude)
-    );
+    const user = users.getUser(socket.id);
+    if (user) {
+      io.to(user.room).emit(
+        'newLocationMessage',
+        generateLocationMessage(user.name, coords.latitude, coords.longitude)
+      );
+    }
   });
 
   socket.on('createEmail', newEmail => {
