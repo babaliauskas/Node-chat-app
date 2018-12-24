@@ -1,9 +1,29 @@
 const socket = io();
 
+function scrollToBottom() {
+  // Selectors
+  const messages = jQuery('#messages');
+  const newMessage = messages.children('li:last-child');
+  // Heights
+  const clientHeight = messages.prop('clientHeight');
+  const scrollTop = messages.prop('scrollTop');
+  const scrollHeight = messages.prop('scrollHeight');
+  const newMessageHeight = newMessage.innerHeight();
+  const lastMessageHeight = newMessage.prev().innerHeight();
+
+  if (
+    clientHeight + scrollTop + newMessageHeight + lastMessageHeight >=
+    scrollHeight
+  ) {
+    messages.scrollTop(scrollHeight);
+  }
+}
+
 socket.on('connect', function() {
   console.log('Connected to server');
 });
 
+// display new message
 socket.on('newMessage', function(message) {
   const formatedTime = moment(message.createdAtt).format('LT');
   const template = jQuery('#message-template').html();
@@ -12,8 +32,8 @@ socket.on('newMessage', function(message) {
     from: message.from,
     createdAt: formatedTime
   });
-
   jQuery('#messages').append(html);
+  scrollToBottom();
 });
 
 // display geolocation as a link
@@ -26,6 +46,7 @@ socket.on('newLocationMessage', function(message) {
     url: message.url
   });
   jQuery('#messages').append(html);
+  scrollToBottom();
 });
 
 socket.on('disconnect', function() {
@@ -39,9 +60,7 @@ socket.on('newEmail', function(email) {
 // Send message button
 jQuery('#message-form').on('submit', function(e) {
   e.preventDefault();
-
   const messageTextBox = jQuery('[name=message]');
-
   socket.emit(
     'createMessage',
     {
@@ -56,14 +75,11 @@ jQuery('#message-form').on('submit', function(e) {
 
 // send geolocation button
 const locationButton = jQuery('#send-location');
-
 locationButton.on('click', function() {
   if (!navigator.geolocation) {
     return alert('Geolocation not supported by your browser');
   }
-
   locationButton.attr('disabled', 'disabled').text('Sending location...');
-
   navigator.geolocation.getCurrentPosition(
     function(position) {
       locationButton.removeAttr('disabled').text('Send location');
